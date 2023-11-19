@@ -1,0 +1,125 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+```{r}
+df = read.csv('walmart.csv')
+head(df)
+
+```
+
+```{r}
+
+df$Date <- as.Date(df$Date, format="%d-%m-%Y")
+
+library(lubridate)
+df$year <- year(ymd(df$Date))
+df$month <- month(ymd(df$Date)) 
+df$day <- day(ymd(df$Date))
+df
+```
+```{r}
+df1
+```
+
+
+```{r}
+
+df$year = as.factor(df$year)
+df$month = as.factor(df$month)
+df$day = as.factor(df$day)
+df1 = subset(df, select = -c(Date) )
+model = lm(Weekly_Sales ~ ., data = df1)
+summary(model)
+```
+
+
+
+```{r}
+df2 = subset(df1, select = -c(year,day,month, Store, ))
+df3 = data.frame(scale(df2))
+
+final = cbind(df3, df1$year, df1$month, df1$day)
+final
+```
+```{r}
+#fit = aov(log(Weekly_Sales) ~ month*Holiday_)
+
+df1
+df1= na.omit(df1)
+
+reduced = aov(log(Weekly_Sales) ~ month+Temp_cut+Unemployment_cut+Holiday_Flag+year +FuelPrice_cut, data = df1)
+summary(reduced)
+
+full = aov(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + 
+    CPI + Unemployment + year + month + day, data = df1)
+summary(full)
+anova(reduced, full)
+```
+
+```{r}
+TukeyHSD(fit, conf.level=.95, which = c('Temp_cut','Unemployment_cut','FuelPrice_cut'))
+
+write.csv(df1,'final.csv')
+```
+
+```{r}
+ft = lm(log(Weekly_Sales) ~ Temperature, data = df1)
+ft2 = lm(log(Weekly_Sales) ~ Temp_cut, data = df1)
+
+anova(ft, ft2)
+```
+
+```{r}
+ft = lm(log(Weekly_Sales) ~ Unemployment, data = df1)
+ft2 = lm(log(Weekly_Sales) ~ Unemployment_cut, data = df1)
+
+anova(ft, ft2)
+
+#unemployment cut is best
+```
+
+```{r}
+
+
+ft = lm(log(Weekly_Sales) ~ Fuel_Price, data = df1)
+ft2 = lm(log(Weekly_Sales) ~ FuelPrice_cut, data = df1)
+
+anova(ft, ft2)
+
+# doesnt change
+```
+
+```{r}
+#Trying to build full model
+
+fit = lm(log(Weekly_Sales) ~ month + Temp_cut + Unemployment_cut + FuelPrice_cut + CPI_cut, data = df1)
+
+fit1= lm(log(Weekly_Sales) ~ month + Temperature + Unemployment, data = df1)
+anova(fit1, fit)
+```
+
+```{r}
+fit = lm(log(Weekly_Sales) ~ month + Temp_cut + Unemployment_cut + FuelPrice_cut + CPI_cut, data = df1)
+
+summary(fit)
+```
+
+```{r}
+hist(df1$CPI)
+(<6.5, 6.5-10, >10)
+```
+
